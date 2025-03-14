@@ -1,22 +1,35 @@
+// Дэлгэцтэй ажиллах контроллер
 var uiController = (function() {
-    var x =100;
 
-    function add(y){
-        return x + y ;
-    }
-
-    return{
-       publicAdd: function(a){
-        a = add(a);
-        console.log('bolovsruulsan utga ; ' + a);
-       } 
-    }
 })();
 
+// Санхүүтэй ажиллах контроллер
 var financeController = (function() {
 
 })();
 
+// Програмын холбогч контроллер
 var appController = (function(uiController, financeController) {
-    uiController.publicAdd(50);
+    var ctrlAddItem = function(){
+       console.log('Delgetsees ugugdluu avah heseg.'); 
+    };
+    document.querySelector('.add__btn').addEventListener('click',function(){
+        // 1. Өгөгдлийг дэлгэцээс олж авна.
+        ctrlAddItem();
+        // 2. Олж авсан өгөгдлүүдээ санхүүгийн контроллерт дамжуулж хадгална.
+
+        // 3. Олж авсан өгөгдлүүдийг вэб дээрээ тохирох хэсэгт гаргана.
+
+        // 4. Төсвийг тооцоолно.
+        // 5. Эцсийн үлдэгдэл, тооцоог дэлгэцэнд гаргана.
+
+    });
+
+    document.addEventListener("keypress", function(event){
+        if(event.keyCode === 13 || event.which === 13) {
+            ctrlAddItem();
+        }
+
+    });
+
 })(uiController, financeController);
