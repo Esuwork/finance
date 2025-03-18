@@ -11,8 +11,16 @@ var uiController = (function() {
         incomeLabel: '.budget__income--value',
         expenseLabel: '.budget__expenses--value',
         percentageLabel: '.budget__expenses--percentage',
-        containerDiv: ".container"
-    }
+        containerDiv: ".container",
+        expensePercentageLabel: '.item__percentage'
+    };
+
+    var nodeListForeach = function(list, callback) {
+        for (var i=0; i < list.length; i++) {
+            callback(list[i], i);
+        }
+    };
+
     return {
         getInput: function(){
             return{
@@ -21,6 +29,17 @@ var uiController = (function() {
                 value: parseFloat(document.querySelector(DOMstrings.inputValue).value)
             };
         },
+
+        displayPercentages: function(allPercentages){
+            // NodeList-ийг олох 
+            var elements = document.querySelectorAll(DOMstrings.expensePercentageLabel);
+
+            // Element bolgohni huvid zarlagin huviig massive-aas avch oruulah
+            nodeListForeach(elements, function(el, index){
+                el.textContent = allPercentages[index];
+            });
+        },
+
         getDOMstrings: function(){
             return DOMstrings;
         },
@@ -88,7 +107,18 @@ var Expense = function(id, description, value) {
     this.id = id;
     this.description = description;
     this.value = value;
+    this.percentage = -1;
 };
+
+Expense.prototype.calcPercentage = function(totalIncome) {
+    if(totalIncome > 0)
+    this.percentage = Math.round((this.value / totalIncome) *100);
+    else this.percentage = 0;
+};
+
+Expense.prototype.getPercentage = function() {
+    return this.percentage;
+}
 
 var calculateTotal = function(type){
     var sum = 0;
@@ -122,8 +152,25 @@ return {
         // Tusviig shineer tootsoolno.
         data.tusuv = data.totals.inc - data.totals.exp;
         // Orlogo zarlagiin huviig tootsoolno
+        if(data.totals.inc > 0)
         data.huvi = Math.round((data.totals.exp / data.totals.inc) * 100);
+        else data.huvi = 0;
         },
+
+        calculatePercentages: function() {
+         data.items.exp.forEach(function(el){
+            el.calcPercentage(data.totals.inc);
+         });
+        },
+
+        getPercentage: function(){
+            var allPercentages = data.items.exp.map(function(el){
+                return el.getPercentage();
+            });
+
+            return allPercentages;
+        },
+    
     tusviigAvah: function() {
         return {
             tusuv: data.tusuv,
@@ -182,17 +229,30 @@ var appController = (function(uiController, financeController) {
         // 3. Олж авсан өгөгдлүүдийг вэб дээрээ тохирох хэсэгт гаргана.
         uiController.addListItem(item, input.type);
         uiController.clearFields();
-        // 4. Төсвийг тооцоолно.
-        financeController.tusuvTootsooloh();
         
-        // 5. Эцсийн үлдэгдliig tootsoolno.
-        var tusuv = financeController.tusviigAvah();
-
-        // 6. Tootsoog delgetsend gargana.
-        uiController.tusviigUzuuleh(tusuv);
+        // Tusviig shineer tootsoolood delgetsend uzuulne.
+        updateTusuv();
         }
 
     };
+
+    var updateTusuv = function () {
+                // 4. Төсвийг тооцоолно.
+                financeController.tusuvTootsooloh();
+        
+                // 5. Эцсийн үлдэгдliig tootsoolno.
+                var tusuv = financeController.tusviigAvah();
+        
+                // 6. Tootsoog delgetsend gargana.
+                uiController.tusviigUzuuleh(tusuv);
+
+                // 7. Элементүүдийн хувийг тооцоолно
+                financeController.calculatePercentages();
+                // 8. Элементүүдийн хувийг хүлээж авна.
+                var allPercentages = financeController.getPercentage();
+                // 9. Эдгээр хувиаг дэлгэцэнд гаргана.
+                uiController.displayPercentages(allPercentages);
+    }   
     var setupEventListeners = function(){
         var DOM = uiController.getDOMstrings();
 
@@ -222,7 +282,8 @@ var appController = (function(uiController, financeController) {
                 // 2. Дэлгэц дээрээс энэ элементийг устгана.
                 uiController.deleteListItem(id);
                 // 3. Үлдэгдэл тооцоог шинэчилж харуулна.
-
+        // Tusviig shineer tootsoolood delgetsend uzuulne.
+        updateTusuv();
 
             }
 
